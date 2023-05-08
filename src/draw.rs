@@ -1,9 +1,32 @@
+use crate::gene::Coefficient;
 use crate::light::Light;
-use crate::vehicle::{Vehicle, VEHICLE_RADIUS};
+use crate::vehicle::{compose_pos, Vehicle, VEHICLE_RADIUS};
 use macroquad::prelude::*;
+use std::f32::consts::FRAC_1_SQRT_2;
+
+pub fn draw_scene(vehicles: &Vec<Vehicle>, lights: &Vec<Light>) {
+    clear_background(SKYBLUE);
+    for light in lights {
+        draw_light(light);
+    }
+    for vehicle in vehicles {
+        draw_vehicle(vehicle);
+    }
+}
 
 pub fn draw_vehicle(vehicle: &Vehicle) {
-    let color = DARKBLUE;
+    let mut color = Color::new(0.1, 0.1, 0.4, 1.0);
+    let mut crossed = false;
+    for gene in &vehicle.genes {
+        if gene.sensor_and_motor_is_crossed() {
+            // color.g = (color.g + 0.3).min(1.0);
+            crossed = true;
+        }
+        match gene.coefficient {
+            Coefficient::Excitatory => color.r = (color.r + 0.3).min(1.0),
+            Coefficient::Inhibitory => color.g = (color.g + 0.3).min(1.0),
+        }
+    }
     let rotation = 45.0 + vehicle.angle;
     draw_poly(
         vehicle.position.x,
@@ -13,6 +36,40 @@ pub fn draw_vehicle(vehicle: &Vehicle) {
         rotation,
         color,
     );
+    if crossed {
+        let front_left = compose_pos(
+            vehicle,
+            Vec2::new(VEHICLE_RADIUS, VEHICLE_RADIUS) * FRAC_1_SQRT_2,
+        );
+        let front_right = compose_pos(
+            vehicle,
+            Vec2::new(VEHICLE_RADIUS, -VEHICLE_RADIUS) * FRAC_1_SQRT_2,
+        );
+        let back_left = compose_pos(
+            vehicle,
+            Vec2::new(-VEHICLE_RADIUS, VEHICLE_RADIUS) * FRAC_1_SQRT_2,
+        );
+        let back_right = compose_pos(
+            vehicle,
+            Vec2::new(-VEHICLE_RADIUS, -VEHICLE_RADIUS) * FRAC_1_SQRT_2,
+        );
+        draw_line(
+            back_left.x,
+            back_left.y,
+            front_right.x,
+            front_right.y,
+            1.0,
+            BLACK,
+        );
+        draw_line(
+            back_right.x,
+            back_right.y,
+            front_left.x,
+            front_left.y,
+            1.0,
+            BLACK,
+        );
+    }
 }
 
 pub fn draw_light(ligth: &Light) {

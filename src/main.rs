@@ -4,8 +4,8 @@ mod gene;
 mod light;
 mod vehicle;
 
-use crate::draw::{draw_light, draw_vehicle};
-use crate::gene::{Coefficient, Gene, Side};
+use crate::draw::{draw_light, draw_scene, draw_vehicle};
+use crate::gene::{Coefficient, Crossed, Gene, Side};
 use crate::light::Light;
 use crate::vehicle::{advance_vehicle, stimulate, Vehicle};
 use macroquad::prelude::*;
@@ -21,26 +21,27 @@ async fn main() {
         position: Vec2::new(screen_width() * 3.0 / 4.0, screen_height() * 0.4),
         radius: screen_height() / 2.0,
     }];
+    let mut advancing = true;
     loop {
         if is_key_down(KeyCode::Escape) {
             break;
         }
-        if is_key_down(KeyCode::R) {
+        if is_key_pressed(KeyCode::R) {
             vehicles = reset_vehicles();
         }
 
-        for vehicle in &mut vehicles {
-            stimulate(vehicle, &lights);
-            advance_vehicle(vehicle);
-            toroid_map(vehicle);
+        if is_key_pressed(KeyCode::Space) {
+            advancing = !advancing;
         }
-        clear_background(SKYBLUE);
-        for light in &lights {
-            draw_light(light);
+
+        if advancing {
+            for vehicle in &mut vehicles {
+                stimulate(vehicle, &lights);
+                advance_vehicle(vehicle);
+                toroid_map(vehicle);
+            }
         }
-        for vehicle in &vehicles {
-            draw_vehicle(vehicle);
-        }
+        draw_scene(&mut vehicles, &lights);
         next_frame().await
     }
 }
@@ -55,19 +56,34 @@ fn window_conf() -> Conf {
 }
 
 fn reset_vehicles() -> Vec<Vehicle> {
-    vec![Vehicle::new(
-        vec![Gene {
-            sensor_side: Side::Left,
-            coefficient: Coefficient::Excitatory,
-            motor_connection: Side::Left,
-        }, Gene {
-            sensor_side: Side::Right,
-            coefficient: Coefficient::Excitatory,
-            motor_connection: Side::Right,
-        }],
-        Vec2::new(screen_width(), screen_height()) * 0.5,
-        0.0,
-    )]
+    let get_genes = |crossed, coefficient| {
+        vec![
+            Gene::new(crossed, Side::Left, coefficient),
+            Gene::new(crossed, Side::Right, coefficient),
+        ]
+    };
+    vec![
+        Vehicle::new(
+            get_genes(Crossed::Straight, Coefficient::Excitatory),
+            Vec2::new(screen_width(), screen_height()) * 0.5,
+            0.0,
+        ),
+        Vehicle::new(
+            get_genes(Crossed::Straight, Coefficient::Inhibitory),
+            Vec2::new(screen_width(), screen_height()) * 0.5,
+            0.0,
+        ),
+        Vehicle::new(
+            get_genes(Crossed::Crossed, Coefficient::Excitatory),
+            Vec2::new(screen_width(), screen_height()) * 0.5,
+            0.0,
+        ),
+        Vehicle::new(
+            get_genes(Crossed::Crossed, Coefficient::Inhibitory),
+            Vec2::new(screen_width(), screen_height()) * 0.5,
+            0.0,
+        ),
+    ]
 }
 
 fn toroid_map(vehicle: &mut Vehicle) {

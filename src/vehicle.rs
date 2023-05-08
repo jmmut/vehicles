@@ -8,7 +8,7 @@ use std::f32::consts::{FRAC_1_PI, PI};
 pub const VEHICLE_RADIUS: f32 = 15.0;
 
 pub struct Vehicle {
-    genes: Vec<Gene>,
+    pub genes: Vec<Gene>,
     left_motor_activation: f32,
     right_motor_activation: f32,
     pub position: Vec2,
@@ -46,7 +46,7 @@ pub fn stimulate(vehicle: &mut Vehicle, lights: &[Light]) {
     }
 }
 
-fn compose_pos(vehicle: &Vehicle, relative_pos: Vec2) -> Vec2 {
+pub fn compose_pos(vehicle: &Vehicle, relative_pos: Vec2) -> Vec2 {
     vehicle.position + relative_pos.rotate(angle_to_cartesian(vehicle.angle))
 }
 
