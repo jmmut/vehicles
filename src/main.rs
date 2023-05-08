@@ -66,4 +66,19 @@ fn reset_vehicles() -> Vec<Vehicle> {
     )]
 }
 
-fn toroid_map(vehicle: &mut Vehicle) {}
+fn toroid_map(vehicle: &mut Vehicle) {
+    let width = screen_width();
+    let height = screen_height();
+    while vehicle.position.x > width {
+        vehicle.position.x -= width;
+    }
+    while vehicle.position.x < 0.0 {
+        vehicle.position.x += width;
+    }
+    while vehicle.position.y > height {
+        vehicle.position.y -= height;
+    }
+    while vehicle.position.y < 0.0 {
+        vehicle.position.y += height;
+    }
+}
