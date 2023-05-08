@@ -60,6 +60,10 @@ fn reset_vehicles() -> Vec<Vehicle> {
             sensor_side: Side::Left,
             coefficient: Coefficient::Excitatory,
             motor_connection: Side::Left,
+        }, Gene {
+            sensor_side: Side::Right,
+            coefficient: Coefficient::Excitatory,
+            motor_connection: Side::Right,
         }],
         Vec2::new(screen_width(), screen_height()) * 0.5,
         0.0,

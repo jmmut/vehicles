@@ -1,4 +1,4 @@
-use crate::gene::Gene;
+use crate::gene::{Coefficient, Gene, Side};
 use crate::light::Light;
 use macroquad::prelude::Vec2;
 use std::f32::consts::{FRAC_1_PI, PI};
@@ -30,12 +30,19 @@ impl Vehicle {
 pub fn stimulate(vehicle: &mut Vehicle, lights: &[Light]) {
     const INTENSITY_TO_STIMULUS: f32 = 0.01;
     for light in lights {
-        let left_sensor = compose_pos(vehicle, Vec2::new(0.0, VEHICLE_RADIUS));
-        let right_sensor = compose_pos(vehicle, Vec2::new(0.0, -VEHICLE_RADIUS));
-        let left_intensity = sensor_intensity(left_sensor, light);
-        let right_intensity = sensor_intensity(right_sensor, light);
-        vehicle.left_motor_activation += left_intensity * INTENSITY_TO_STIMULUS;
-        vehicle.right_motor_activation += right_intensity * INTENSITY_TO_STIMULUS;
+        for gene in &vehicle.genes {
+            let relative_sensor_pos = match gene.sensor_side {
+                Side::Left => Vec2::new(0.0, VEHICLE_RADIUS),
+                Side::Right => Vec2::new(0.0, -VEHICLE_RADIUS),
+            };
+            let sensor_pos = compose_pos(vehicle, relative_sensor_pos);
+            let intensity = sensor_intensity(sensor_pos, light, &gene.coefficient);
+            let stimulus = intensity * INTENSITY_TO_STIMULUS;
+            match gene.motor_connection {
+                Side::Left => vehicle.left_motor_activation += stimulus,
+                Side::Right => vehicle.right_motor_activation += stimulus,
+            }
+        }
     }
 }
 
@@ -43,9 +50,12 @@ fn compose_pos(vehicle: &Vehicle, relative_pos: Vec2) -> Vec2 {
     vehicle.position + relative_pos.rotate(angle_to_cartesian(vehicle.angle))
 }
 
-fn sensor_intensity(sensor_position: Vec2, light: &Light) -> f32 {
+fn sensor_intensity(sensor_position: Vec2, light: &Light, coef: &Coefficient) -> f32 {
     let sensor_to_light = light.position - sensor_position;
-    let intensity = light.radius - sensor_to_light.length();
+    let intensity = match coef {
+        Coefficient::Excitatory => light.radius - sensor_to_light.length(),
+        Coefficient::Inhibitory => sensor_to_light.length(),
+    };
     intensity.max(0.0)
 }
 
