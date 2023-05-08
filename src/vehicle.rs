@@ -1,9 +1,11 @@
-use std::f32::consts::{FRAC_1_PI, PI};
 use crate::gene::Gene;
-use macroquad::prelude::Vec2;
 use crate::light::Light;
+use macroquad::prelude::Vec2;
+use std::f32::consts::{FRAC_1_PI, PI};
 
 // const SENSOR_MAX_DISTANCE: f32 = 50.0;
+
+pub const VEHICLE_RADIUS: f32 = 15.0;
 
 pub struct Vehicle {
     genes: Vec<Gene>,
@@ -26,28 +28,33 @@ impl Vehicle {
 }
 
 pub fn stimulate(vehicle: &mut Vehicle, lights: &[Light]) {
+    const INTENSITY_TO_STIMULUS: f32 = 0.01;
     for light in lights {
-        let vehicle_to_light = light.position - vehicle.position;
-        if vehicle_to_light.length() < light.radius {
-            let ligth_angle = cartesian_to_angle_degrees(vehicle_to_light);
-            if ligth_angle.abs() <= 90.0 {
-                let stimulus = (light.radius - vehicle_to_light.length()) * 0.01;
-                // TODO: this ignore genes
-                if ligth_angle >= 0.0 {
-                    vehicle.left_motor_activation += stimulus;
-                } else {
-                    vehicle.right_motor_activation += stimulus;
-                }
-            }
-        }
+        let left_sensor = compose_pos(vehicle, Vec2::new(0.0, VEHICLE_RADIUS));
+        let right_sensor = compose_pos(vehicle, Vec2::new(0.0, -VEHICLE_RADIUS));
+        let left_intensity = sensor_intensity(left_sensor, light);
+        let right_intensity = sensor_intensity(right_sensor, light);
+        vehicle.left_motor_activation += left_intensity * INTENSITY_TO_STIMULUS;
+        vehicle.right_motor_activation += right_intensity * INTENSITY_TO_STIMULUS;
     }
+}
+
+fn compose_pos(vehicle: &Vehicle, relative_pos: Vec2) -> Vec2 {
+    vehicle.position + relative_pos.rotate(angle_to_cartesian(vehicle.angle))
+}
+
+fn sensor_intensity(sensor_position: Vec2, light: &Light) -> f32 {
+    let sensor_to_light = light.position - sensor_position;
+    let intensity = light.radius - sensor_to_light.length();
+    intensity.max(0.0)
 }
 
 pub fn advance_vehicle(vehicle: &mut Vehicle) {
     let curve = vehicle.left_motor_activation - vehicle.right_motor_activation;
-    let distance = vehicle.left_motor_activation + vehicle.right_motor_activation;
-    let new_angle = curve * 2.0;
-    let new_pos = vehicle.position + distance * angle_to_cartesian(curve);
+    let distance = vehicle.left_motor_activation + vehicle.right_motor_activation + 0.5;
+    let new_half_angle = vehicle.angle + curve;
+    let new_angle = vehicle.angle + curve * 2.0;
+    let new_pos = vehicle.position + distance * angle_to_cartesian(new_half_angle);
     vehicle.angle = new_angle;
     vehicle.position = new_pos;
     vehicle.left_motor_activation = 0.0;
@@ -65,22 +72,37 @@ fn cartesian_to_angle_degrees(vector: Vec2) -> f32 {
 
 #[cfg(test)]
 mod tests {
-    use std::f32::consts::{FRAC_1_SQRT_2, SQRT_2};
-    use crate::assertions::{assert_float_eq, assert_vec2_eq};
     use super::*;
+    use crate::assertions::{assert_float_eq, assert_vec2_eq};
+    use std::f32::consts::{FRAC_1_SQRT_2, SQRT_2};
 
     #[test]
     fn test_angles() {
         assert_vec2_eq(angle_to_cartesian(0.0), Vec2::new(1.0, 0.0));
-        assert_vec2_eq(angle_to_cartesian(45.0), Vec2::new(FRAC_1_SQRT_2, FRAC_1_SQRT_2));
+        assert_vec2_eq(
+            angle_to_cartesian(45.0),
+            Vec2::new(FRAC_1_SQRT_2, FRAC_1_SQRT_2),
+        );
         assert_vec2_eq(angle_to_cartesian(90.0), Vec2::new(0.0, 1.0));
-        assert_vec2_eq(angle_to_cartesian(90.0 + 45.0), Vec2::new(-FRAC_1_SQRT_2, FRAC_1_SQRT_2));
+        assert_vec2_eq(
+            angle_to_cartesian(90.0 + 45.0),
+            Vec2::new(-FRAC_1_SQRT_2, FRAC_1_SQRT_2),
+        );
         assert_vec2_eq(angle_to_cartesian(180.0), Vec2::new(-1.0, 0.0));
-        assert_vec2_eq(angle_to_cartesian(180.0 + 45.0), Vec2::new(-FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
+        assert_vec2_eq(
+            angle_to_cartesian(180.0 + 45.0),
+            Vec2::new(-FRAC_1_SQRT_2, -FRAC_1_SQRT_2),
+        );
         assert_vec2_eq(angle_to_cartesian(270.0), Vec2::new(0.0, -1.0));
         assert_vec2_eq(angle_to_cartesian(-90.0), Vec2::new(0.0, -1.0));
-        assert_vec2_eq(angle_to_cartesian(270.0 + 45.0), Vec2::new(FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
-        assert_vec2_eq(angle_to_cartesian(-45.0), Vec2::new(FRAC_1_SQRT_2, -FRAC_1_SQRT_2));
+        assert_vec2_eq(
+            angle_to_cartesian(270.0 + 45.0),
+            Vec2::new(FRAC_1_SQRT_2, -FRAC_1_SQRT_2),
+        );
+        assert_vec2_eq(
+            angle_to_cartesian(-45.0),
+            Vec2::new(FRAC_1_SQRT_2, -FRAC_1_SQRT_2),
+        );
     }
 
     fn assert_angle_roundtrip(expected_angle: f32) {
@@ -111,5 +133,25 @@ mod tests {
         assert_angle_roundtrip(-50.0);
         assert_angle_roundtrip(-45.0);
         assert_angle_roundtrip(-40.0);
+    }
+
+    const INITIAL_ANGLE: f32 = 45.0;
+
+    #[test]
+    fn test_advance_no_stimuli() {
+        let mut vehicle = empty_vehicle();
+        advance_vehicle(&mut vehicle);
+        assert_eq!(vehicle.angle, INITIAL_ANGLE);
+        assert_eq!(vehicle.position, Vec2::default());
+    }
+
+    fn empty_vehicle() -> Vehicle {
+        Vehicle {
+            genes: vec![],
+            left_motor_activation: 0.0,
+            right_motor_activation: 0.0,
+            position: Vec2::default(),
+            angle: INITIAL_ANGLE,
+        }
     }
 }
