@@ -4,7 +4,7 @@ mod vehicle;
 
 use macroquad::prelude::*;
 use crate::gene::{Coefficient, Gene, Side};
-use crate::vehicle::Vehicle;
+use crate::vehicle::{advance_vehicle, Vehicle};
 use crate::draw::draw_vehicle;
 
 const DEFAULT_WINDOW_TITLE: &'static str = "Braitenberg Vehicles";
@@ -23,13 +23,14 @@ async fn main() {
         0.0,
     )];
 
+    // let lights = vec![Light {position: Vec2::new(screen_width() *3.0 / 4.0, screen_height() *0.4), radius: screen_height()/2.0}];
     loop {
         if is_key_down(KeyCode::Escape) {
             break;
         }
-        // for vehicle in &vehicles {
-        //     advance_vehicle(vehicle);
-        // }
+        for vehicle in &mut vehicles {
+            advance_vehicle(vehicle);
+        }
         clear_background(SKYBLUE);
         for vehicle in &vehicles {
             draw_vehicle(vehicle);
