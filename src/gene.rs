@@ -33,6 +33,8 @@ pub struct Gene {
     // stimulus: {light, vehicle, food, etc}
 }
 
+pub type Genes = Vec<Gene>;
+
 impl Gene {
     pub fn new(crossed: Crossed, sensor_side: Side, coefficient: Coefficient) -> Self {
         match crossed {

@@ -99,7 +99,7 @@ fn show_vehicle_info_if_clicked(vehicles: &Vec<Vehicle>, mouse_position: (f32, f
     let (x, y) = mouse_position;
     let mouse_position = Vec2::new(x, y);
     for vehicle in vehicles {
-        if closer_than(mouse_position, vehicle.position, VEHICLE_RADIUS) {
+        if closer_than(mouse_position, vehicle.position(), VEHICLE_RADIUS) {
             for line in vehicle.to_strings() {
                 widgets::Label::new(line).ui(&mut root_ui())
             }
@@ -110,16 +110,16 @@ fn show_vehicle_info_if_clicked(vehicles: &Vec<Vehicle>, mouse_position: (f32, f
 fn toroid_map(vehicle: &mut Vehicle) {
     let width = screen_width();
     let height = screen_height();
-    while vehicle.position.x > width {
-        vehicle.position.x -= width;
+    while vehicle.position().x > width {
+        vehicle.position().x -= width;
     }
-    while vehicle.position.x < 0.0 {
-        vehicle.position.x += width;
+    while vehicle.position().x < 0.0 {
+        vehicle.position().x += width;
     }
-    while vehicle.position.y > height {
-        vehicle.position.y -= height;
+    while vehicle.position().y > height {
+        vehicle.position().y -= height;
     }
-    while vehicle.position.y < 0.0 {
-        vehicle.position.y += height;
+    while vehicle.position().y < 0.0 {
+        vehicle.position().y += height;
     }
 }

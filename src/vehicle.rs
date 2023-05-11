@@ -1,4 +1,4 @@
-use crate::gene::{Coefficient, Gene, Side};
+use crate::gene::{Coefficient, Gene, Genes, Side};
 use crate::light::Light;
 use macroquad::prelude::Vec2;
 
@@ -11,11 +11,11 @@ const MINIMUM_SPEED: f32 = 0.5;
 
 #[derive(Debug)]
 pub struct Vehicle {
-    pub genes: Vec<Gene>,
-    pub left_engine_activation: f32,
-    pub right_engine_activation: f32,
-    pub position: Vec2,
-    pub angle: f32,
+    genes: Genes,
+    left_engine_activation: f32,
+    right_engine_activation: f32,
+    position: Vec2,
+    angle: f32,
 }
 
 impl Vehicle {
@@ -39,6 +39,16 @@ impl Vehicle {
             self.left_engine_activation, self.right_engine_activation, self.position, self.angle
         ));
         lines
+    }
+
+    pub fn genes(&self) -> &Genes {
+        &self.genes
+    }
+    pub fn position(&self) -> Vec2 {
+        self.position
+    }
+    pub fn angle(&self) -> f32 {
+        self.angle
     }
 }
 
@@ -114,7 +124,7 @@ mod tests {
     #[test]
     fn test_advance_stimuli() {
         let mut vehicle = empty_vehicle();
-        // increase left_engine
+
         advance_vehicle(&mut vehicle);
 
         // check angle

@@ -17,7 +17,7 @@ pub fn draw_scene(vehicles: &Vec<Vehicle>, lights: &Vec<Light>) {
 pub fn draw_vehicle(vehicle: &Vehicle) {
     let mut color = Color::new(0.1, 0.1, 0.4, 1.0);
     let mut crossed = false;
-    for gene in &vehicle.genes {
+    for gene in vehicle.genes() {
         if gene.sensor_and_engine_is_crossed() {
             // color.g = (color.g + 0.3).min(1.0);
             crossed = true;
@@ -27,10 +27,10 @@ pub fn draw_vehicle(vehicle: &Vehicle) {
             Coefficient::Inhibitory => color.g = (color.g + 0.3).min(1.0),
         }
     }
-    let rotation = 45.0 + vehicle.angle;
+    let rotation = 45.0 + vehicle.angle();
     draw_poly(
-        vehicle.position.x,
-        vehicle.position.y,
+        vehicle.position().x,
+        vehicle.position().y,
         4,
         VEHICLE_RADIUS,
         rotation,
