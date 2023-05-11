@@ -14,8 +14,8 @@ pub struct Vehicle {
     genes: Genes,
     left_engine_activation: f32,
     right_engine_activation: f32,
-    position: Vec2,
-    angle: f32,
+    pub position: Vec2,
+    pub angle: f32,
 }
 
 impl Vehicle {
@@ -43,12 +43,6 @@ impl Vehicle {
 
     pub fn genes(&self) -> &Genes {
         &self.genes
-    }
-    pub fn position(&self) -> Vec2 {
-        self.position
-    }
-    pub fn angle(&self) -> f32 {
-        self.angle
     }
 }
 
@@ -86,8 +80,8 @@ fn sensor_intensity(sensor_position: Vec2, light: &Light, coef: &Coefficient) ->
 }
 
 pub fn advance_vehicle(vehicle: &mut Vehicle) {
-    let curve = vehicle.left_engine_activation - vehicle.right_engine_activation;
-    let distance = vehicle.left_engine_activation + vehicle.right_engine_activation + MINIMUM_SPEED;
+    let curve = vehicle.right_engine_activation - vehicle.left_engine_activation;
+    let distance = vehicle.right_engine_activation + vehicle.left_engine_activation + MINIMUM_SPEED;
     let new_half_angle = vehicle.angle + curve;
     let new_angle = vehicle.angle + curve * 2.0;
     let new_pos = vehicle.position + distance * angle_to_cartesian(new_half_angle);
@@ -100,7 +94,6 @@ pub fn advance_vehicle(vehicle: &mut Vehicle) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::f32::consts::{FRAC_1_SQRT_2, SQRT_2};
     const INITIAL_ANGLE: f32 = 45.0;
 
     #[test]
@@ -108,7 +101,7 @@ mod tests {
         let mut vehicle = empty_vehicle();
         advance_vehicle(&mut vehicle);
         assert_eq!(vehicle.angle, INITIAL_ANGLE);
-        assert_eq!(vehicle.position, Vec2::default());
+        assert_eq!(vehicle.position, MINIMUM_SPEED * angle_to_cartesian(INITIAL_ANGLE));
     }
 
     fn empty_vehicle() -> Vehicle {
@@ -124,9 +117,9 @@ mod tests {
     #[test]
     fn test_advance_stimuli() {
         let mut vehicle = empty_vehicle();
-
+        vehicle.left_engine_activation += 2.0;
+        vehicle.right_engine_activation += 1.0;
         advance_vehicle(&mut vehicle);
-
-        // check angle
+        assert_eq!(vehicle.angle, INITIAL_ANGLE - 2.0);
     }
 }

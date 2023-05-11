@@ -27,10 +27,10 @@ pub fn draw_vehicle(vehicle: &Vehicle) {
             Coefficient::Inhibitory => color.g = (color.g + 0.3).min(1.0),
         }
     }
-    let rotation = 45.0 + vehicle.angle();
+    let rotation = 45.0 + vehicle.angle;
     draw_poly(
-        vehicle.position().x,
-        vehicle.position().y,
+        vehicle.position.x,
+        vehicle.position.y,
         4,
         VEHICLE_RADIUS,
         rotation,
