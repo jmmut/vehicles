@@ -1,7 +1,8 @@
 use crate::gene::{Coefficient, Gene, Side};
 use crate::light::Light;
 use macroquad::prelude::Vec2;
-use std::f32::consts::{FRAC_1_PI, PI};
+
+use crate::math::angle_to_cartesian;
 
 // const SENSOR_MAX_DISTANCE: f32 = 50.0;
 
@@ -26,6 +27,18 @@ impl Vehicle {
             position,
             angle,
         }
+    }
+
+    pub fn to_strings(&self) -> Vec<String> {
+        let mut lines = vec![];
+        for gene in &self.genes {
+            lines.push(format!("{:?}", gene));
+        }
+        lines.push(format!(
+            "left engine: {}, right engine {}, pos: {}, angle: {}",
+            self.left_engine_activation, self.right_engine_activation, self.position, self.angle
+        ));
+        lines
     }
 }
 
@@ -74,80 +87,10 @@ pub fn advance_vehicle(vehicle: &mut Vehicle) {
     vehicle.right_engine_activation = 0.0;
 }
 
-fn angle_to_cartesian(angle_degrees: f32) -> Vec2 {
-    let angle_radians = 2.0 * PI * angle_degrees * (1.0 / 360.0);
-    Vec2::new(angle_radians.cos(), angle_radians.sin())
-}
-
-fn cartesian_to_angle_degrees(vector: Vec2) -> f32 {
-    f32::atan2(vector.y, vector.x) * 360.0 * 0.5 * FRAC_1_PI
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::assertions::{assert_float_eq, assert_vec2_eq};
     use std::f32::consts::{FRAC_1_SQRT_2, SQRT_2};
-
-    #[test]
-    fn test_angles() {
-        assert_vec2_eq(angle_to_cartesian(0.0), Vec2::new(1.0, 0.0));
-        assert_vec2_eq(
-            angle_to_cartesian(45.0),
-            Vec2::new(FRAC_1_SQRT_2, FRAC_1_SQRT_2),
-        );
-        assert_vec2_eq(angle_to_cartesian(90.0), Vec2::new(0.0, 1.0));
-        assert_vec2_eq(
-            angle_to_cartesian(90.0 + 45.0),
-            Vec2::new(-FRAC_1_SQRT_2, FRAC_1_SQRT_2),
-        );
-        assert_vec2_eq(angle_to_cartesian(180.0), Vec2::new(-1.0, 0.0));
-        assert_vec2_eq(
-            angle_to_cartesian(180.0 + 45.0),
-            Vec2::new(-FRAC_1_SQRT_2, -FRAC_1_SQRT_2),
-        );
-        assert_vec2_eq(angle_to_cartesian(270.0), Vec2::new(0.0, -1.0));
-        assert_vec2_eq(angle_to_cartesian(-90.0), Vec2::new(0.0, -1.0));
-        assert_vec2_eq(
-            angle_to_cartesian(270.0 + 45.0),
-            Vec2::new(FRAC_1_SQRT_2, -FRAC_1_SQRT_2),
-        );
-        assert_vec2_eq(
-            angle_to_cartesian(-45.0),
-            Vec2::new(FRAC_1_SQRT_2, -FRAC_1_SQRT_2),
-        );
-    }
-
-    fn assert_angle_roundtrip(expected_angle: f32) {
-        let cartesian = angle_to_cartesian(expected_angle);
-        let angle = cartesian_to_angle_degrees(cartesian);
-        assert_float_eq(angle, expected_angle);
-    }
-
-    #[test]
-    fn test_angles_roundtrip() {
-        assert_angle_roundtrip(0.0);
-        assert_angle_roundtrip(40.0);
-        assert_angle_roundtrip(45.0);
-        assert_angle_roundtrip(50.0);
-        assert_angle_roundtrip(85.0);
-        assert_angle_roundtrip(90.0);
-        assert_angle_roundtrip(95.0);
-        assert_angle_roundtrip(90.0 + 40.0);
-        assert_angle_roundtrip(90.0 + 45.0);
-        assert_angle_roundtrip(90.0 + 50.0);
-        assert_angle_roundtrip(175.0);
-        assert_angle_roundtrip(179.0);
-        assert_angle_roundtrip(-175.0);
-        assert_angle_roundtrip(180.0 + 40.0 - 360.0);
-        assert_angle_roundtrip(180.0 + 45.0 - 360.0);
-        assert_angle_roundtrip(180.0 + 50.0 - 360.0);
-        assert_angle_roundtrip(-90.0);
-        assert_angle_roundtrip(-50.0);
-        assert_angle_roundtrip(-45.0);
-        assert_angle_roundtrip(-40.0);
-    }
-
     const INITIAL_ANGLE: f32 = 45.0;
 
     #[test]
@@ -166,5 +109,14 @@ mod tests {
             position: Vec2::default(),
             angle: INITIAL_ANGLE,
         }
+    }
+
+    #[test]
+    fn test_advance_stimuli() {
+        let mut vehicle = empty_vehicle();
+        // increase left_engine
+        advance_vehicle(&mut vehicle);
+
+        // check angle
     }
 }

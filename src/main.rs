@@ -2,11 +2,13 @@ mod assertions;
 mod draw;
 mod gene;
 mod light;
+mod math;
 mod vehicle;
 
-use crate::draw::{draw_light, draw_scene, draw_vehicle};
+use crate::draw::draw_scene;
 use crate::gene::{Coefficient, Crossed, Gene, Side};
 use crate::light::Light;
+use crate::math::closer_than;
 use crate::vehicle::{advance_vehicle, stimulate, Vehicle, VEHICLE_RADIUS};
 use macroquad::prelude::*;
 use macroquad::ui::{root_ui, widgets};
@@ -23,39 +25,9 @@ async fn main() {
         radius: screen_height() / 2.0,
     }];
     let mut advancing = true;
-    loop {
-        if is_key_down(KeyCode::Escape) {
-            break;
-        }
-        if is_key_pressed(KeyCode::R) {
-            vehicles = reset_vehicles();
-        }
-
-        if is_key_pressed(KeyCode::Space) {
-            advancing = !advancing;
-        }
-        if is_mouse_button_down(MouseButton::Left) {
-            for vehicle in &vehicles {
-                let (x, y) = mouse_position();
-                let mouse_to_vehicle = vehicle.position - Vec2::new(x, y);
-                let squared_distance = mouse_to_vehicle.dot(mouse_to_vehicle);
-                if squared_distance < VEHICLE_RADIUS * VEHICLE_RADIUS {
-                    let mut lines = vec![];
-                    for gene in &vehicle.genes {
-                        lines.push(format!("{:?}", gene));
-                    }
-                    lines.push(format!("left engine: {}, right engine {}, pos: {}, angle: {}",
-                               vehicle.left_engine_activation,
-                               vehicle.right_engine_activation,
-                               vehicle.position,
-                               vehicle.angle));
-                    for line in lines {
-                        widgets::Label::new(line).ui(&mut root_ui())
-                    }
-                }
-            }
-        }
-
+    let mut exit = false;
+    while !exit {
+        handle_commands(&mut vehicles, &mut advancing, &mut exit);
         if advancing {
             for vehicle in &mut vehicles {
                 stimulate(vehicle, &lights);
@@ -63,7 +35,7 @@ async fn main() {
                 toroid_map(vehicle);
             }
         }
-        draw_scene(&mut vehicles, &lights);
+        draw_scene(&vehicles, &lights);
         next_frame().await
     }
 }
@@ -106,6 +78,33 @@ fn reset_vehicles() -> Vec<Vehicle> {
             0.0,
         ),
     ]
+}
+
+fn handle_commands(vehicles: &mut Vec<Vehicle>, advancing: &mut bool, exit: &mut bool) {
+    if is_key_down(KeyCode::Escape) {
+        *exit = true;
+    }
+    if is_key_pressed(KeyCode::R) {
+        *vehicles = reset_vehicles();
+    }
+    if is_key_pressed(KeyCode::Space) {
+        *advancing = !*advancing;
+    }
+    if is_mouse_button_down(MouseButton::Left) {
+        show_vehicle_info_if_clicked(vehicles, mouse_position());
+    }
+}
+
+fn show_vehicle_info_if_clicked(vehicles: &Vec<Vehicle>, mouse_position: (f32, f32)) {
+    let (x, y) = mouse_position;
+    let mouse_position = Vec2::new(x, y);
+    for vehicle in vehicles {
+        if closer_than(mouse_position, vehicle.position, VEHICLE_RADIUS) {
+            for line in vehicle.to_strings() {
+                widgets::Label::new(line).ui(&mut root_ui())
+            }
+        }
+    }
 }
 
 fn toroid_map(vehicle: &mut Vehicle) {
