@@ -1,4 +1,4 @@
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Side {
     Left,
     Right,
@@ -13,22 +13,23 @@ impl Side {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Crossed {
     Crossed,
     Straight,
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Coefficient {
     Excitatory,
     Inhibitory,
 }
 
+#[derive(Debug)]
 pub struct Gene {
     pub sensor_side: Side,
     pub coefficient: Coefficient,
-    pub motor_connection: Side,
+    pub engine_connection: Side,
     // stimulus: {light, vehicle, food, etc}
 }
 
@@ -43,17 +44,17 @@ impl Gene {
         Self {
             sensor_side,
             coefficient,
-            motor_connection: sensor_side,
+            engine_connection: sensor_side,
         }
     }
     pub fn new_crossed(sensor_side: Side, coefficient: Coefficient) -> Self {
         Self {
             sensor_side,
             coefficient,
-            motor_connection: sensor_side.cross(),
+            engine_connection: sensor_side.cross(),
         }
     }
-    pub fn sensor_and_motor_is_crossed(&self) -> bool {
-        self.sensor_side == self.motor_connection
+    pub fn sensor_and_engine_is_crossed(&self) -> bool {
+        self.sensor_side == self.engine_connection
     }
 }

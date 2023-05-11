@@ -6,11 +6,13 @@ use std::f32::consts::{FRAC_1_PI, PI};
 // const SENSOR_MAX_DISTANCE: f32 = 50.0;
 
 pub const VEHICLE_RADIUS: f32 = 15.0;
+const MINIMUM_SPEED: f32 = 0.5;
 
+#[derive(Debug)]
 pub struct Vehicle {
     pub genes: Vec<Gene>,
-    left_motor_activation: f32,
-    right_motor_activation: f32,
+    pub left_engine_activation: f32,
+    pub right_engine_activation: f32,
     pub position: Vec2,
     pub angle: f32,
 }
@@ -19,8 +21,8 @@ impl Vehicle {
     pub fn new(genes: Vec<Gene>, position: Vec2, angle: f32) -> Self {
         Self {
             genes,
-            left_motor_activation: 1.0,
-            right_motor_activation: 1.0,
+            left_engine_activation: 1.0,
+            right_engine_activation: 1.0,
             position,
             angle,
         }
@@ -38,9 +40,9 @@ pub fn stimulate(vehicle: &mut Vehicle, lights: &[Light]) {
             let sensor_pos = compose_pos(vehicle, relative_sensor_pos);
             let intensity = sensor_intensity(sensor_pos, light, &gene.coefficient);
             let stimulus = intensity * INTENSITY_TO_STIMULUS;
-            match gene.motor_connection {
-                Side::Left => vehicle.left_motor_activation += stimulus,
-                Side::Right => vehicle.right_motor_activation += stimulus,
+            match gene.engine_connection {
+                Side::Left => vehicle.left_engine_activation += stimulus,
+                Side::Right => vehicle.right_engine_activation += stimulus,
             }
         }
     }
@@ -52,6 +54,7 @@ pub fn compose_pos(vehicle: &Vehicle, relative_pos: Vec2) -> Vec2 {
 
 fn sensor_intensity(sensor_position: Vec2, light: &Light, coef: &Coefficient) -> f32 {
     let sensor_to_light = light.position - sensor_position;
+    // TODO: limit light distance?
     let intensity = match coef {
         Coefficient::Excitatory => light.radius - sensor_to_light.length(),
         Coefficient::Inhibitory => sensor_to_light.length(),
@@ -60,15 +63,15 @@ fn sensor_intensity(sensor_position: Vec2, light: &Light, coef: &Coefficient) ->
 }
 
 pub fn advance_vehicle(vehicle: &mut Vehicle) {
-    let curve = vehicle.left_motor_activation - vehicle.right_motor_activation;
-    let distance = vehicle.left_motor_activation + vehicle.right_motor_activation + 0.5;
+    let curve = vehicle.left_engine_activation - vehicle.right_engine_activation;
+    let distance = vehicle.left_engine_activation + vehicle.right_engine_activation + MINIMUM_SPEED;
     let new_half_angle = vehicle.angle + curve;
     let new_angle = vehicle.angle + curve * 2.0;
     let new_pos = vehicle.position + distance * angle_to_cartesian(new_half_angle);
     vehicle.angle = new_angle;
     vehicle.position = new_pos;
-    vehicle.left_motor_activation = 0.0;
-    vehicle.right_motor_activation = 0.0;
+    vehicle.left_engine_activation = 0.0;
+    vehicle.right_engine_activation = 0.0;
 }
 
 fn angle_to_cartesian(angle_degrees: f32) -> Vec2 {
@@ -158,8 +161,8 @@ mod tests {
     fn empty_vehicle() -> Vehicle {
         Vehicle {
             genes: vec![],
-            left_motor_activation: 0.0,
-            right_motor_activation: 0.0,
+            left_engine_activation: 0.0,
+            right_engine_activation: 0.0,
             position: Vec2::default(),
             angle: INITIAL_ANGLE,
         }

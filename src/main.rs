@@ -7,8 +7,9 @@ mod vehicle;
 use crate::draw::{draw_light, draw_scene, draw_vehicle};
 use crate::gene::{Coefficient, Crossed, Gene, Side};
 use crate::light::Light;
-use crate::vehicle::{advance_vehicle, stimulate, Vehicle};
+use crate::vehicle::{advance_vehicle, stimulate, Vehicle, VEHICLE_RADIUS};
 use macroquad::prelude::*;
+use macroquad::ui::{root_ui, widgets};
 
 const DEFAULT_WINDOW_TITLE: &'static str = "Braitenberg Vehicles";
 const DEFAULT_WINDOW_WIDTH: i32 = 1280;
@@ -32,6 +33,27 @@ async fn main() {
 
         if is_key_pressed(KeyCode::Space) {
             advancing = !advancing;
+        }
+        if is_mouse_button_down(MouseButton::Left) {
+            for vehicle in &vehicles {
+                let (x, y) = mouse_position();
+                let mouse_to_vehicle = vehicle.position - Vec2::new(x, y);
+                let squared_distance = mouse_to_vehicle.dot(mouse_to_vehicle);
+                if squared_distance < VEHICLE_RADIUS * VEHICLE_RADIUS {
+                    let mut lines = vec![];
+                    for gene in &vehicle.genes {
+                        lines.push(format!("{:?}", gene));
+                    }
+                    lines.push(format!("left engine: {}, right engine {}, pos: {}, angle: {}",
+                               vehicle.left_engine_activation,
+                               vehicle.right_engine_activation,
+                               vehicle.position,
+                               vehicle.angle));
+                    for line in lines {
+                        widgets::Label::new(line).ui(&mut root_ui())
+                    }
+                }
+            }
         }
 
         if advancing {

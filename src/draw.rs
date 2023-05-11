@@ -18,7 +18,7 @@ pub fn draw_vehicle(vehicle: &Vehicle) {
     let mut color = Color::new(0.1, 0.1, 0.4, 1.0);
     let mut crossed = false;
     for gene in &vehicle.genes {
-        if gene.sensor_and_motor_is_crossed() {
+        if gene.sensor_and_engine_is_crossed() {
             // color.g = (color.g + 0.3).min(1.0);
             crossed = true;
         }
