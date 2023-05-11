@@ -25,7 +25,7 @@ pub fn cartesian_to_angle_degrees(vector: Vec2) -> f32 {
 mod tests {
     use super::*;
     use crate::assertions::{assert_float_eq, assert_vec2_eq};
-    use std::f32::consts::{FRAC_1_SQRT_2};
+    use std::f32::consts::FRAC_1_SQRT_2;
 
     #[test]
     fn test_angles() {

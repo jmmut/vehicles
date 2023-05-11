@@ -101,7 +101,10 @@ mod tests {
         let mut vehicle = empty_vehicle();
         advance_vehicle(&mut vehicle);
         assert_eq!(vehicle.angle, INITIAL_ANGLE);
-        assert_eq!(vehicle.position, MINIMUM_SPEED * angle_to_cartesian(INITIAL_ANGLE));
+        assert_eq!(
+            vehicle.position,
+            MINIMUM_SPEED * angle_to_cartesian(INITIAL_ANGLE)
+        );
     }
 
     fn empty_vehicle() -> Vehicle {

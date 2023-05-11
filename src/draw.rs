@@ -53,6 +53,7 @@ pub fn draw_vehicle(vehicle: &Vehicle) {
             vehicle,
             Vec2::new(-VEHICLE_RADIUS, -VEHICLE_RADIUS) * FRAC_1_SQRT_2,
         );
+
         draw_line(
             back_left.x,
             back_left.y,

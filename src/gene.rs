@@ -57,6 +57,6 @@ impl Gene {
         }
     }
     pub fn sensor_and_engine_is_crossed(&self) -> bool {
-        self.sensor_side == self.engine_connection
+        self.sensor_side != self.engine_connection
     }
 }
