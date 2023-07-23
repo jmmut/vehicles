@@ -25,9 +25,10 @@ async fn main() {
         radius: screen_height() / 2.0,
     }];
     let mut advancing = true;
+    let mut showing_help = false;
     let mut exit = false;
     while !exit {
-        handle_commands(&mut vehicles, &mut advancing, &mut exit);
+        handle_commands(&mut vehicles, &mut advancing, &mut showing_help, &mut exit);
         if advancing {
             for vehicle in &mut vehicles {
                 stimulate(vehicle, &lights);
@@ -80,8 +81,16 @@ fn reset_vehicles() -> Vec<Vehicle> {
     ]
 }
 
-fn handle_commands(vehicles: &mut Vec<Vehicle>, advancing: &mut bool, exit: &mut bool) {
-    if is_key_down(KeyCode::Escape) {
+fn handle_commands(vehicles: &mut Vec<Vehicle>, advancing: &mut bool, showing_help: &mut bool, exit: &mut bool) {
+    root_ui().label(None, "Press H to show/hide help");
+    root_ui().label(None, "");
+    if is_key_pressed(KeyCode::H) {
+        *showing_help = !*showing_help;
+    }
+    if *showing_help {
+        show_help();
+    }
+    if is_key_pressed(KeyCode::Escape) {
         *exit = true;
     }
     if is_key_pressed(KeyCode::R) {
@@ -105,6 +114,16 @@ fn show_vehicle_info_if_clicked(vehicles: &Vec<Vehicle>, mouse_position: (f32, f
             }
         }
     }
+}
+
+fn show_help() {
+    root_ui().label(None, "This program simulates simple vehicles in Valentino Braitenberg's book 'Vehicles'");
+    root_ui().label(None, "");
+    root_ui().label(None, "Press Escape to close");
+    root_ui().label(None, "Press R to reset vehicle positions");
+    root_ui().label(None, "Press Space to pause time");
+    root_ui().label(None, "Click on any vehicle (square) to see its configuration (best done paused)");
+    root_ui().label(None, "");
 }
 
 fn toroid_map(vehicle: &mut Vehicle) {
